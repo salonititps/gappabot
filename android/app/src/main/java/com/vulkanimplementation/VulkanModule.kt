@@ -25,6 +25,9 @@ class VulkanModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
     external fun nativeInitVulkan(surface: Surface): Boolean
     external fun nativeRender(r: Float, g: Float, b: Float)
     external fun nativeCleanup()
+    external fun nativeSetRotation(x: Float, y: Float, z: Float)
+    external fun nativeSetScale(scale: Float)
+    external fun nativeUpdateCamera(deltaX: Float, deltaY: Float)
 
     @ReactMethod
     fun initVulkan(viewTag: Int) {
@@ -64,8 +67,27 @@ class VulkanModule(reactContext: ReactApplicationContext) : ReactContextBaseJava
     fun render(r: Double, g: Double, b: Double) {
         if (isVulkanInitialized) {
             nativeRender(r.toFloat(), g.toFloat(), b.toFloat())
-        } else {
-            android.util.Log.w(NAME, "Vulkan not initialized, cannot render")
+        }
+    }
+
+    @ReactMethod
+    fun setRotation(x: Double, y: Double, z: Double) {
+        if (isVulkanInitialized) {
+            nativeSetRotation(x.toFloat(), y.toFloat(), z.toFloat())
+        }
+    }
+
+    @ReactMethod
+    fun setScale(scale: Double) {
+        if (isVulkanInitialized) {
+            nativeSetScale(scale.toFloat())
+        }
+    }
+
+    @ReactMethod
+    fun updateCamera(deltaX: Double, deltaY: Double) {
+        if (isVulkanInitialized) {
+            nativeUpdateCamera(deltaX.toFloat(), deltaY.toFloat())
         }
     }
 
