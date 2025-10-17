@@ -4,11 +4,11 @@ import {
   NativeModules,
   findNodeHandle,
   Platform,
-  Button,
   Text,
   requireNativeComponent,
   View,
   PanResponder,
+  TouchableOpacity,
 } from 'react-native';
 
 const { VulkanModule } = NativeModules;
@@ -116,40 +116,59 @@ export const VulkanView: React.FC<VulkanViewProps> = ({ style }) => {
         <Text style={styles.label}>Scale: {scale.toFixed(1)}x</Text>
 
         <View style={styles.buttonGrid}>
-          <View style={styles.buttonWrapper}>
-            <Button
-              title="Zoom In +"
-              onPress={zoomIn}
-              disabled={!isInitialized}
-              color="#00ff88"
-            />
-          </View>
-          <View style={styles.buttonWrapper}>
-            <Button
-              title="Zoom Out -"
-              onPress={zoomOut}
-              disabled={!isInitialized}
-              color="#ff6b6b"
-            />
-          </View>
+          <TouchableOpacity
+            style={[
+              styles.button,
+              styles.buttonZoomIn,
+              !isInitialized && styles.buttonDisabled,
+            ]}
+            onPress={zoomIn}
+            disabled={!isInitialized}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>Zoom In +</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[
+              styles.button,
+              styles.buttonZoomOut,
+              !isInitialized && styles.buttonDisabled,
+            ]}
+            onPress={zoomOut}
+            disabled={!isInitialized}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>Zoom Out -</Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.buttonWrapper}>
-          <Button
-            title="Reset View"
+        <View style={styles.buttonGrid}>
+          <TouchableOpacity
+            style={[
+              styles.button,
+              styles.buttonReset,
+              !isInitialized && styles.buttonDisabled,
+            ]}
             onPress={resetView}
             disabled={!isInitialized}
-            color="#4dabf7"
-          />
-        </View>
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>Reset View</Text>
+          </TouchableOpacity>
 
-        <View style={styles.buttonWrapper}>
-          <Button
-            title="Change Background"
+          <TouchableOpacity
+            style={[
+              styles.button,
+              styles.buttonColor,
+              !isInitialized && styles.buttonDisabled,
+            ]}
             onPress={changeBackgroundColor}
             disabled={!isInitialized}
-            color="#ffd43b"
-          />
+            activeOpacity={0.7}
+          >
+            <Text style={styles.buttonText}>Change Background</Text>
+          </TouchableOpacity>
         </View>
 
         <Text style={styles.info}>💡 Drag on cube to rotate it</Text>
@@ -209,9 +228,39 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     gap: 10,
   },
-  buttonWrapper: {
-    flex: 1,
+  button: {
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 10,
+  },
+  buttonZoomIn: {
+    backgroundColor: '#00ff88',
+    flex: 1,
+  },
+  buttonZoomOut: {
+    backgroundColor: '#ff6b6b',
+    flex: 1,
+  },
+  buttonReset: {
+    backgroundColor: '#4dabf7',
+    flex: 1,
+  },
+  buttonColor: {
+    backgroundColor: '#ffd43b',
+    flex: 1,
+  },
+  buttonDisabled: {
+    backgroundColor: '#444',
+    opacity: 0.5,
+  },
+  buttonText: {
+    color: '#000',
+    fontSize: 16,
+    fontWeight: 'bold',
+    textAlign: 'center',
   },
   info: {
     fontSize: 13,

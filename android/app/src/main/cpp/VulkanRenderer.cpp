@@ -292,11 +292,32 @@ private:
         createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
         createInfo.pApplicationInfo = &appInfo;
 
-        const char* extensions[] = {
-            VK_KHR_SURFACE_EXTENSION_NAME,
-            VK_KHR_ANDROID_SURFACE_EXTENSION_NAME
-        };
-        createInfo.enabledExtensionCount = 2;
+        // ⚡ DISABLE validation layers for release builds (device doesn't have them)
+        #ifdef ENABLE_VALIDATION_LAYERS
+            const char* extensions[] = {
+                VK_KHR_SURFACE_EXTENSION_NAME,
+                VK_KHR_ANDROID_SURFACE_EXTENSION_NAME,
+                VK_EXT_DEBUG_UTILS_EXTENSION_NAME
+            };
+            createInfo.enabledExtensionCount = 3;
+            
+            const char* layers[] = {
+                "VK_LAYER_KHRONOS_validation"
+            };
+            createInfo.enabledLayerCount = 1;
+            createInfo.ppEnabledLayerNames = layers;
+            LOGI("✅ Validation layers ENABLED (debug mode)");
+        #else
+            const char* extensions[] = {
+                VK_KHR_SURFACE_EXTENSION_NAME,
+                VK_KHR_ANDROID_SURFACE_EXTENSION_NAME
+            };
+            createInfo.enabledExtensionCount = 2;
+            createInfo.enabledLayerCount = 0;
+            createInfo.ppEnabledLayerNames = nullptr;
+            LOGI("✅ Validation layers DISABLED (release mode)");
+        #endif
+        
         createInfo.ppEnabledExtensionNames = extensions;
 
         VkResult result = vkCreateInstance(&createInfo, nullptr, &instance);
@@ -305,7 +326,7 @@ private:
             return false;
         }
         
-        LOGI("Vulkan instance created successfully");
+        LOGI("✅ Vulkan instance created successfully");
         return true;
     }
 
@@ -426,69 +447,51 @@ private:
         // Log all available formats
         LOGI("Available surface formats:");
         for (const auto& format : formats) {
-            LOGI("  Format: %d, ColorSpace: %d", format.format, format.colorSpace);
-        }
-        
-        // Choose format based on what's ACTUALLY available
-        VkSurfaceFormatKHR selectedFormat = formats[0]; // Default to first
-        
-        // Priority order: Try to find these formats in order
-        std::vector<VkFormat> preferredFormats = {
-            VK_FORMAT_R8G8B8A8_UNORM,    // Format 37 - Most compatible
-            VK_FORMAT_B8G8R8A8_UNORM,    // Format 44
-            VK_FORMAT_R8G8B8A8_SRGB,     // Format 43
-            VK_FORMAT_B8G8R8A8_SRGB,     // Format 50
-            VK_FORMAT_A8B8G8R8_UNORM_PACK32, // Format 41
-        };
-        
-        bool formatFound = false;
-        for (const auto& preferredFormat : preferredFormats) {
-            for (const auto& availableFormat : formats) {
-                if (availableFormat.format == preferredFormat) {
-                    selectedFormat = availableFormat;
-                    formatFound = true;
-                    LOGI("Selected preferred format: %d", selectedFormat.format);
-                    break;
-                }
+            LOGI("  Format: %d (0x%X), ColorSpace: %d", format.format, format.format, format.colorSpace);
+            
+            // Check if format supports color attachment
+            VkFormatProperties props;
+            vkGetPhysicalDeviceFormatProperties(physicalDevice, format.format, &props);
+            if (props.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT) {
+                LOGI("    ✅ Supports COLOR_ATTACHMENT");
+            } else {
+                LOGI("    ❌ Does NOT support COLOR_ATTACHMENT");
             }
-            if (formatFound) break;
         }
         
-        if (!formatFound) {
-            LOGI("Using fallback format: %d", selectedFormat.format);
+        // Find the FIRST format that actually supports color attachment
+        VkSurfaceFormatKHR selectedFormat = formats[0];
+        bool foundValidFormat = false;
+        
+        // Priority: Find ANY format that supports color attachment
+        for (const auto& format : formats) {
+            VkFormatProperties props;
+            vkGetPhysicalDeviceFormatProperties(physicalDevice, format.format, &props);
+            
+            if (props.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT) {
+                selectedFormat = format;
+                foundValidFormat = true;
+                LOGI("✅ Selected format: %d (0x%X) - supports color attachment", format.format, format.format);
+                break;
+            }
+        }
+        
+        if (!foundValidFormat) {
+            LOGE("❌ No format supports color attachment! Using format 0 anyway");
+            selectedFormat = formats[0];
         }
         
         swapChainImageFormat = selectedFormat.format;
-        
-        // Verify the format is supported for color attachment
-        VkFormatProperties formatProps;
-        vkGetPhysicalDeviceFormatProperties(physicalDevice, swapChainImageFormat, &formatProps);
-        
-        if (!(formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT)) {
-            LOGE("Selected format %d does not support color attachment!", swapChainImageFormat);
-            // Try to find any format that supports color attachment
-            for (const auto& format : formats) {
-                vkGetPhysicalDeviceFormatProperties(physicalDevice, format.format, &formatProps);
-                if (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT) {
-                    selectedFormat = format;
-                    swapChainImageFormat = format.format;
-                    LOGI("Found color attachment compatible format: %d", swapChainImageFormat);
-                    break;
-                }
-            }
-        }
         
         // Get swap chain extent
         swapChainExtent = capabilities.currentExtent;
         if (swapChainExtent.width == UINT32_MAX) {
             int32_t width = ANativeWindow_getWidth(window);
             int32_t height = ANativeWindow_getHeight(window);
-            swapChainExtent.width = std::clamp(static_cast<uint32_t>(width), 
-                                               capabilities.minImageExtent.width,
-                                               capabilities.maxImageExtent.width);
-            swapChainExtent.height = std::clamp(static_cast<uint32_t>(height),
-                                                capabilities.minImageExtent.height,
-                                                capabilities.maxImageExtent.height);
+            swapChainExtent.width = std::max(capabilities.minImageExtent.width, 
+                                             std::min(capabilities.maxImageExtent.width, static_cast<uint32_t>(width)));
+            swapChainExtent.height = std::max(capabilities.minImageExtent.height, 
+                                              std::min(capabilities.maxImageExtent.height, static_cast<uint32_t>(height)));
         }
 
         uint32_t imageCount = capabilities.minImageCount + 1;
@@ -502,7 +505,6 @@ private:
         std::vector<VkPresentModeKHR> presentModes(presentModeCount);
         vkGetPhysicalDeviceSurfacePresentModesKHR(physicalDevice, surface, &presentModeCount, presentModes.data());
 
-        // Choose present mode
         VkPresentModeKHR selectedPresentMode = VK_PRESENT_MODE_FIFO_KHR;
         for (const auto& mode : presentModes) {
             if (mode == VK_PRESENT_MODE_MAILBOX_KHR) {
@@ -523,20 +525,16 @@ private:
         createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
         createInfo.preTransform = capabilities.currentTransform;
         
-        // Choose composite alpha
+        // Choose composite alpha - try each until one works
         VkCompositeAlphaFlagBitsKHR compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-        std::vector<VkCompositeAlphaFlagBitsKHR> compositeAlphaFlags = {
-            VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-            VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
-            VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR,
-            VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR,
-        };
-        
-        for (const auto& flag : compositeAlphaFlags) {
-            if (capabilities.supportedCompositeAlpha & flag) {
-                compositeAlpha = flag;
-                break;
-            }
+        if (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR) {
+            compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        } else if (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR) {
+            compositeAlpha = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
+        } else if (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR) {
+            compositeAlpha = VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR;
+        } else if (capabilities.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR) {
+            compositeAlpha = VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
         }
         
         createInfo.compositeAlpha = compositeAlpha;
@@ -546,7 +544,7 @@ private:
 
         VkResult result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain);
         if (result != VK_SUCCESS) {
-            LOGE("Failed to create swap chain: %d", result);
+            LOGE("❌ Failed to create swap chain: %d", result);
             return false;
         }
 
@@ -554,8 +552,9 @@ private:
         swapChainImages.resize(imageCount);
         vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
 
-        LOGI("✅ Swap chain created: %dx%d, %d images, format: %d", 
-             swapChainExtent.width, swapChainExtent.height, imageCount, swapChainImageFormat);
+        LOGI("✅ Swap chain created: %dx%d, %d images, format: %d (0x%X)", 
+             swapChainExtent.width, swapChainExtent.height, imageCount, 
+             swapChainImageFormat, swapChainImageFormat);
         return true;
     }
 
@@ -653,9 +652,12 @@ private:
     bool createGraphicsPipeline() {
         VkShaderModule vertShaderModule = createShaderModule(vertShaderCode, sizeof(vertShaderCode));
         VkShaderModule fragShaderModule = createShaderModule(fragShaderCode, sizeof(fragShaderCode));
+        
+        LOGI("✅ Vertex shader module: %p, size: %zu bytes", (void*)vertShaderModule, sizeof(vertShaderCode));
+        LOGI("✅ Fragment shader module: %p, size: %zu bytes", (void*)fragShaderModule, sizeof(fragShaderCode));
 
         if (vertShaderModule == VK_NULL_HANDLE || fragShaderModule == VK_NULL_HANDLE) {
-            LOGE("Failed to create shader modules");
+            LOGE("❌ Failed to create shader modules");
             if (vertShaderModule != VK_NULL_HANDLE) vkDestroyShaderModule(device, vertShaderModule, nullptr);
             if (fragShaderModule != VK_NULL_HANDLE) vkDestroyShaderModule(device, fragShaderModule, nullptr);
             return false;
@@ -675,6 +677,7 @@ private:
 
         VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 
+        // Vertex input
         VkVertexInputBindingDescription bindingDescription{};
         bindingDescription.binding = 0;
         bindingDescription.stride = sizeof(Vertex);
@@ -703,24 +706,13 @@ private:
         inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
         inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-        VkViewport viewport{};
-        viewport.x = 0.0f;
-        viewport.y = 0.0f;
-        viewport.width = (float) swapChainExtent.width;
-        viewport.height = (float) swapChainExtent.height;
-        viewport.minDepth = 0.0f;
-        viewport.maxDepth = 1.0f;
-
-        VkRect2D scissor{};
-        scissor.offset = {0, 0};
-        scissor.extent = swapChainExtent;
-
+        // ⚡ DYNAMIC VIEWPORT & SCISSOR (fixes Android driver issues)
         VkPipelineViewportStateCreateInfo viewportState{};
         viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
         viewportState.viewportCount = 1;
-        viewportState.pViewports = &viewport;
+        viewportState.pViewports = nullptr;  // Will be set dynamically
         viewportState.scissorCount = 1;
-        viewportState.pScissors = &scissor;
+        viewportState.pScissors = nullptr;   // Will be set dynamically
 
         VkPipelineRasterizationStateCreateInfo rasterizer{};
         rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -748,16 +740,28 @@ private:
         colorBlending.attachmentCount = 1;
         colorBlending.pAttachments = &colorBlendAttachment;
 
+        // ⚡ DYNAMIC STATE (viewport + scissor)
+        std::vector<VkDynamicState> dynamicStates = {
+            VK_DYNAMIC_STATE_VIEWPORT,
+            VK_DYNAMIC_STATE_SCISSOR,
+        };
+
+        VkPipelineDynamicStateCreateInfo dynamicState{};
+        dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+        dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
+        dynamicState.pDynamicStates = dynamicStates.data();
+
         VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
         pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
         pipelineLayoutInfo.setLayoutCount = 0;
 
         if (vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-            LOGE("Failed to create pipeline layout");
+            LOGE("❌ Failed to create pipeline layout");
             vkDestroyShaderModule(device, vertShaderModule, nullptr);
             vkDestroyShaderModule(device, fragShaderModule, nullptr);
             return false;
         }
+        LOGI("✅ Pipeline layout created");
 
         VkGraphicsPipelineCreateInfo pipelineInfo{};
         pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -769,21 +773,24 @@ private:
         pipelineInfo.pRasterizationState = &rasterizer;
         pipelineInfo.pMultisampleState = &multisampling;
         pipelineInfo.pColorBlendState = &colorBlending;
+        pipelineInfo.pDynamicState = &dynamicState;
         pipelineInfo.layout = pipelineLayout;
         pipelineInfo.renderPass = renderPass;
         pipelineInfo.subpass = 0;
 
+        LOGI("🔧 Creating graphics pipeline with format %d (0x%X)...", swapChainImageFormat, swapChainImageFormat);
+        
         VkResult result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline);
         
         vkDestroyShaderModule(device, vertShaderModule, nullptr);
         vkDestroyShaderModule(device, fragShaderModule, nullptr);
 
         if (result != VK_SUCCESS) {
-            LOGE("Failed to create graphics pipeline: %d", result);
+            LOGE("❌ Failed to create graphics pipeline: %d", result);
             return false;
         }
 
-        LOGI("Graphics pipeline created successfully");
+        LOGI("✅ Graphics pipeline created successfully!");
         return true;
     }
 
@@ -961,6 +968,22 @@ private:
         renderPassInfo.pClearValues = &clearColor;
 
         vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+        
+        // ⚡ SET DYNAMIC VIEWPORT & SCISSOR
+        VkViewport viewport{};
+        viewport.x = 0.0f;
+        viewport.y = 0.0f;
+        viewport.width = (float) swapChainExtent.width;
+        viewport.height = (float) swapChainExtent.height;
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+        VkRect2D scissor{};
+        scissor.offset = {0, 0};
+        scissor.extent = swapChainExtent;
+        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+    
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
 
         VkBuffer vertexBuffers[] = {vertexBuffer};
