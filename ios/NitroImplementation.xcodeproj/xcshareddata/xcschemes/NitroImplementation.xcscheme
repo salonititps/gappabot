@@ -15,9 +15,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-               BuildableName = "gappabot.app"
-               BlueprintName = "gappabot"
-               ReferencedContainer = "container:gappabot.xcodeproj">
+               BuildableName = "NitroImplementation.app"
+               BlueprintName = "NitroImplementation"
+               ReferencedContainer = "container:NitroImplementation.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -33,9 +33,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "00E356ED1AD99517003FC87E"
-               BuildableName = "gappabotTests.xctest"
-               BlueprintName = "gappabotTests"
-               ReferencedContainer = "container:gappabot.xcodeproj">
+               BuildableName = "NitroImplementationTests.xctest"
+               BlueprintName = "NitroImplementationTests"
+               ReferencedContainer = "container:NitroImplementation.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -55,9 +55,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "gappabot.app"
-            BlueprintName = "gappabot"
-            ReferencedContainer = "container:gappabot.xcodeproj">
+            BuildableName = "NitroImplementation.app"
+            BlueprintName = "NitroImplementation"
+            ReferencedContainer = "container:NitroImplementation.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -72,9 +72,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "13B07F861A680F5B00A75B9A"
-            BuildableName = "gappabot.app"
-            BlueprintName = "gappabot"
-            ReferencedContainer = "container:gappabot.xcodeproj">
+            BuildableName = "NitroImplementation.app"
+            BlueprintName = "NitroImplementation"
+            ReferencedContainer = "container:NitroImplementation.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
