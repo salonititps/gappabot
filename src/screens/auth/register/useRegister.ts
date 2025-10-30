@@ -1,6 +1,9 @@
 import * as Yup from 'yup';
 import { useState } from 'react';
 import api from '../../../api';
+import { useNavigation } from '@react-navigation/native';
+import { useDispatch } from 'react-redux';
+import { setStateKey } from '../../../redux/reducers/auth.slice';
 
 // Types
 export interface RegisterFormValues {
@@ -51,10 +54,12 @@ export const registerValidationSchema = Yup.object().shape({
 export const useRegister = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const navigation = useNavigation();
+  const dispatch = useDispatch();
 
   const handleRegister = async (values: RegisterFormValues) => {
+    setLoading(true);
     try {
-      setLoading(true);
       setError(null);
 
       // Prepare data without confirmPassword
@@ -68,30 +73,25 @@ export const useRegister = () => {
       // Call register API
       const response = await api.AUTH.register(registerData);
 
-      // Handle success
-      console.log('Registration successful:', response.data);
-
-      // TODO: Navigate to login or home screen
-      // TODO: Store user data if needed
-      // Example: navigation.navigate('Login')
-
-      return response.data as RegisterResponse;
+      // store token & user data in redux
+      if (response?.success === true) {
+        dispatch(setStateKey({ key: 'token', value: response.data.token }));
+        dispatch(setStateKey({ key: 'userData', value: response.data.user }));
+      } else {
+        return;
+      }
     } catch (err: any) {
       // Handle error
       const errorMessage =
-        err?.response?.data?.message ||
-        'Registration failed. Please try again.';
+        err?.response?.data?.message || 'Login failed. Please try again.';
       setError(errorMessage);
-      console.error('Registration error:', err);
-      throw err;
     } finally {
       setLoading(false);
     }
   };
 
   const handleLogin = () => {
-    // TODO: Navigate to login screen
-    console.log('Login clicked');
+    navigation.popToTop();
   };
 
   return {

@@ -42,6 +42,8 @@ export const RegisterScreen: React.FC = () => {
           initialValues={initialValues}
           validationSchema={registerValidationSchema}
           onSubmit={handleRegister}
+          validateOnChange={false}
+          validateOnBlur={true}
         >
           {({
             handleChange,

@@ -1,5 +1,4 @@
 import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
-import { Alert } from 'react-native';
 import { fetch as nitroFetch } from 'react-native-nitro-fetch';
 import { store } from '../redux/store';
 import { constants } from '../utils/constants';
@@ -35,17 +34,8 @@ api.interceptors.response.use(
   (response: AxiosResponse) => {
     return response?.data;
   },
-  (error: { response: { status: any; data: any } }) => {
-    const status = error?.response?.status;
-    const errorData = error?.response?.data;
-
-    if (status >= 400 && status < 410) {
-      Alert.alert(errorData?.message || 'Client Error');
-    } else {
-      Alert.alert('Something went wrong');
-    }
-
-    return error;
+  (error: any) => {
+    return Promise.reject(error);
   },
 );
 
@@ -105,20 +95,12 @@ const nitroClient = async ({
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const status = response.status;
-
-      if (status >= 400 && status < 410) {
-        Alert.alert(errorData?.message || 'Client Error');
-      } else {
-        Alert.alert('Something went wrong');
-      }
-
       throw new Error(errorData?.message || 'Request failed');
     }
 
     return await response.json();
   } catch (error: any) {
-    Alert.alert(error?.message || 'Network Error');
+    // Alert.alert(error?.message || 'Network Error');
     throw error;
   }
 };

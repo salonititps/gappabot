@@ -1,5 +1,5 @@
 export const constants = Object.freeze({
-  BASE_URL: 'https://626e45d00443.ngrok-free.app/api',
+  BASE_URL: 'https://f1105c29f3b6.ngrok-free.app/api',
   METHODS: {
     GET: 'GET',
     POST: 'POST',

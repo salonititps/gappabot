@@ -15,7 +15,8 @@ import { loginValidationSchema, initialValues, useLogin } from './useLogin';
 
 export const LoginScreen: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false);
-  const { handleLogin, handleForgotPassword, handleSignUp } = useLogin();
+  const { handleLogin, handleForgotPassword, handleSignUp, loading, error } =
+    useLogin();
 
   return (
     <SafeAreaView style={styles.container}>
@@ -40,6 +41,8 @@ export const LoginScreen: React.FC = () => {
           initialValues={initialValues}
           validationSchema={loginValidationSchema}
           onSubmit={handleLogin}
+          validateOnChange={false}
+          validateOnBlur={true}
         >
           {({
             handleChange,
@@ -50,6 +53,13 @@ export const LoginScreen: React.FC = () => {
             touched,
           }) => (
             <View style={styles.formContainer}>
+              {/* Error Message */}
+              {error && (
+                <View style={styles.errorContainer}>
+                  <Text style={styles.errorText}>{error}</Text>
+                </View>
+              )}
+
               {/* Email Input */}
               <Input
                 label="Email"
@@ -90,6 +100,7 @@ export const LoginScreen: React.FC = () => {
                   <Text style={styles.forgotPassword}>Forgot password?</Text>
                 </TouchableOpacity>
               </View>
+
               {/* Sign Up Link */}
               <View style={styles.signUpContainer}>
                 <Text style={styles.signUpText}>Don't have an account? </Text>
@@ -99,7 +110,7 @@ export const LoginScreen: React.FC = () => {
               </View>
 
               {/* Login Button */}
-              <Button title="Log in" onPress={handleSubmit} />
+              <Button title="Log in" onPress={handleSubmit} loading={loading} />
             </View>
           )}
         </Formik>

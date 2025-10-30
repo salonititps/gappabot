@@ -1,17 +1,31 @@
+import { useNavigation } from '@react-navigation/native';
+import { useState } from 'react';
+import { useDispatch } from 'react-redux';
 import * as Yup from 'yup';
+import api from '../../../api';
+import { setStateKey } from '../../../redux/reducers/auth.slice';
 
 // Types
 export interface LoginFormValues {
   email: string;
   password: string;
-  rememberMe: boolean;
+}
+
+export interface LoginResponse {
+  token: string;
+  user: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    createdAt: string;
+  };
 }
 
 // Initial Values
 export const initialValues: LoginFormValues = {
   email: '',
   password: '',
-  rememberMe: false,
 };
 
 // Validation Schema
@@ -26,9 +40,40 @@ export const loginValidationSchema = Yup.object().shape({
 
 // Logic Hook
 export const useLogin = () => {
-  const handleLogin = (values: LoginFormValues) => {
-    // TODO: Implement actual login logic here
-    console.log('Login with:', values);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const navigation = useNavigation();
+  const dispatch = useDispatch();
+
+  const handleLogin = async (values: LoginFormValues) => {
+    setLoading(true);
+    try {
+      setError(null);
+
+      // Prepare login data
+      const loginData = {
+        email: values.email,
+        password: values.password,
+      };
+
+      // Call login API
+      const response = await api.AUTH.login(loginData);
+
+      // store token & user data in redux
+      if (response?.success === true) {
+        dispatch(setStateKey({ key: 'token', value: response.data.token }));
+        dispatch(setStateKey({ key: 'userData', value: response.data.user }));
+      } else {
+        return;
+      }
+    } catch (err: any) {
+      // Handle error
+      const errorMessage =
+        err?.response?.data?.message || 'Login failed. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleForgotPassword = () => {
@@ -37,19 +82,14 @@ export const useLogin = () => {
   };
 
   const handleSignUp = () => {
-    // TODO: Navigate to sign up screen
-    console.log('Sign up clicked');
-  };
-
-  const handleSocialLogin = (provider: 'google' | 'apple' | 'facebook') => {
-    // TODO: Implement social login logic
-    console.log(`Login with ${provider}`);
+    navigation.push('register');
   };
 
   return {
     handleLogin,
     handleForgotPassword,
     handleSignUp,
-    handleSocialLogin,
+    loading,
+    error,
   };
 };

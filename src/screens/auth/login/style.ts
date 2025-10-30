@@ -74,4 +74,15 @@ export const styles = StyleSheet.create({
     gap: 16,
     marginBottom: 8,
   },
+  errorContainer: {
+    backgroundColor: colors.error + '10',
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 12,
+  },
+  errorText: {
+    fontSize: 14,
+    color: colors.error,
+    textAlign: 'center',
+  },
 });
