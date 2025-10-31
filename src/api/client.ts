@@ -64,9 +64,9 @@ const nitroClient = async ({
     const fullUrl = url.startsWith('http')
       ? url
       : `${constants.BASE_URL}${url}`;
+    console.log('fullUrl: ', fullUrl);
 
     const requestHeaders: Record<string, string> = {
-      'Content-Type': 'application/json',
       ...headers,
     };
 
@@ -74,33 +74,50 @@ const nitroClient = async ({
       requestHeaders.Authorization = `Bearer ${token}`;
     }
 
-    const fetchOptions: RequestInit = {
+    const fetchOptions: any = {
       method: (method || 'GET').toUpperCase(),
       headers: requestHeaders,
     };
 
-    if (
+    // Handle FormData for Nitro-Fetch
+    if (data && data instanceof FormData) {
+      console.log('📦 Converting FormData for Nitro-Fetch...');
+
+      // Nitro-Fetch requires body as FormData without Content-Type header
+      // The browser/native layer will set the correct Content-Type with boundary
+      fetchOptions.body = data;
+
+      // Don't set Content-Type manually - let the native layer handle it
+      delete requestHeaders['Content-Type'];
+    } else if (
       data &&
       ['POST', 'PUT', 'PATCH'].includes((method || 'GET').toUpperCase())
     ) {
-      if (data instanceof FormData) {
-        fetchOptions.body = data;
-        delete requestHeaders['Content-Type'];
-      } else {
-        fetchOptions.body = JSON.stringify(data);
-      }
+      fetchOptions.body = JSON.stringify(data);
+      requestHeaders['Content-Type'] = 'application/json';
     }
+
+    console.log('🚀 Nitro-Fetch options:', {
+      url: fullUrl,
+      method: fetchOptions.method,
+      hasBody: !!fetchOptions.body,
+      isFormData: data instanceof FormData,
+    });
 
     const response = await nitroFetch(fullUrl, fetchOptions);
 
+    console.log('✅ Nitro-Fetch response status:', response.status);
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData?.message || 'Request failed');
+      throw new Error(
+        errorData?.message || `Request failed with status ${response.status}`,
+      );
     }
 
     return await response.json();
   } catch (error: any) {
-    // Alert.alert(error?.message || 'Network Error');
+    console.error('❌ Nitro-Fetch error:', error);
     throw error;
   }
 };
@@ -111,7 +128,6 @@ const client = ({
   url,
   data,
   headers = {},
-  // requiresAuth = false,
   isFormData = false,
   useNitro = false,
   ...otherParams
@@ -129,18 +145,11 @@ const client = ({
   }
 
   // Otherwise, use Axios (default for text APIs)
-  console.log('📝 Using Axios for:', url);
-  const requestHeaders = { ...headers };
-
-  if (isFormData || data instanceof FormData) {
-    delete requestHeaders['Content-Type'];
-  }
-
   return api({
     method,
     url,
     data,
-    headers: requestHeaders,
+    headers,
     ...otherParams,
   });
 };

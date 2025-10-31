@@ -12,7 +12,7 @@ type RootReducerType = ReturnType<typeof rootReducer>;
 const persistConfig: PersistConfig<RootReducerType> = {
   key: 'nitroRoot',
   storage: AsyncStorage,
-  whitelist: [],
+  whitelist: ['auth'],
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

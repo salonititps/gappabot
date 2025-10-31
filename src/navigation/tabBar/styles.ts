@@ -12,7 +12,7 @@ export const styles = StyleSheet.create({
   },
   wrapper: {
     flex: 1,
-    height: 60,
+    height: 40,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 4,

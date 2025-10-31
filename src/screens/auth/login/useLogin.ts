@@ -67,6 +67,7 @@ export const useLogin = () => {
         return;
       }
     } catch (err: any) {
+      console.error('err: ', err);
       // Handle error
       const errorMessage =
         err?.response?.data?.message || 'Login failed. Please try again.';

@@ -2,6 +2,7 @@ export const colors = Object.freeze({
   // Primary colors
   primary: '#00D09E', // Teal/Green primary color
   primaryDark: '#00B88A',
+  primaryLight: '#E6FAF5', // Light teal background for active states
 
   // Text colors
   textPrimary: '#1A1A1A',
