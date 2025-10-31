@@ -25,7 +25,7 @@ const api = {
       }),
   },
 
-  // ====== NEW: MEDIA SECTION (Images/Videos) ======
+  // ====== MEDIA SECTION ======
   MEDIA: {
     uploadMedia: (data: any, options?: ApiOptions) =>
       client({
@@ -33,14 +33,26 @@ const api = {
         url: `/upload`,
         data,
         isFormData: true,
-        useNitro: true,
+        // useNitro: true,
         ...options,
       }),
 
-    getMedia: (type: 'image' | 'video', options?: ApiOptions) =>
+    getMedia: (
+      type: 'image' | 'video',
+      page: number = 1,
+      limit: number = 50,
+      options?: ApiOptions,
+    ) =>
       client({
         method: constants.METHODS.GET,
-        url: `/upload?type=${type}`,
+        url: `/upload?type=${type}&page=${page}&limit=${limit}`,
+        ...options,
+      }),
+
+    deleteMedia: (id: string, options?: ApiOptions) =>
+      client({
+        method: constants.METHODS.DELETE,
+        url: `/upload/${id}`,
         ...options,
       }),
   },

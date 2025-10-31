@@ -45,7 +45,6 @@ interface ClientParams {
   data?: any;
   headers?: Record<string, string>;
   requiresAuth?: boolean;
-  isFormData?: boolean;
   useNitro?: boolean;
   [key: string]: any;
 }
@@ -128,11 +127,9 @@ const client = ({
   url,
   data,
   headers = {},
-  isFormData = false,
   useNitro = false,
   ...otherParams
 }: ClientParams) => {
-  // If useNitro is true, use Nitro-Fetch for media/heavy data
   if (useNitro) {
     console.log('🚀 Using Nitro-Fetch for:', url);
     return nitroClient({

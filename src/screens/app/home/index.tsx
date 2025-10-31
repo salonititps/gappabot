@@ -1,58 +1,74 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   Animated,
-  FlatList,
-  Image,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import {
   PhotoIcon,
   VideoCameraIcon,
   PlusIcon,
+  TrashIcon,
+  XMarkIcon,
 } from 'react-native-heroicons/solid';
 import { styles } from './style';
 import { colors } from '../../../utils/colors';
 import { useHome } from './useHome';
+import { MediaGallery } from '../../../components/MediaGallery';
+
+const { width } = Dimensions.get('window');
 
 const Home = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'photos' | 'videos'>('photos');
-  const rotateValue = useState(new Animated.Value(0))[0];
-  const scalePhoto = useState(new Animated.Value(0))[0];
-  const scaleVideo = useState(new Animated.Value(0))[0];
-  const slideAnimation = useState(new Animated.Value(0))[0];
+  const scalePhoto = useRef(new Animated.Value(0)).current;
+  const scaleVideo = useRef(new Animated.Value(0)).current;
+  const slideAnimation = useRef(new Animated.Value(0)).current;
 
-  // Use custom hook for media handling
-  const { isUploading, photos, videos, handlePhotoUpload, handleVideoUpload } =
-    useHome();
+  const {
+    isUploading,
+    isLoading,
+    isLoadingMore,
+    isRefreshing,
+    isDeleting,
+    photos,
+    videos,
+    hasMorePhotos,
+    hasMoreVideos,
+    handlePhotoUpload,
+    handleVideoUpload,
+    loadMorePhotos,
+    loadMoreVideos,
+    refreshPhotos,
+    refreshVideos,
+    selectedPhotos,
+    selectedVideos,
+    isSelectionMode,
+    handleLongPress,
+    handlePress,
+    cancelSelection,
+    deleteSelectedItems,
+  } = useHome();
 
   const toggleMenu = () => {
     const toValue = isMenuOpen ? 0 : 1;
 
-    Animated.parallel([
-      Animated.spring(rotateValue, {
+    Animated.stagger(50, [
+      Animated.spring(scalePhoto, {
         toValue,
         useNativeDriver: true,
         tension: 40,
         friction: 7,
       }),
-      Animated.stagger(50, [
-        Animated.spring(scalePhoto, {
-          toValue,
-          useNativeDriver: true,
-          tension: 40,
-          friction: 7,
-        }),
-        Animated.spring(scaleVideo, {
-          toValue,
-          useNativeDriver: true,
-          tension: 40,
-          friction: 7,
-        }),
-      ]),
+      Animated.spring(scaleVideo, {
+        toValue,
+        useNativeDriver: true,
+        tension: 40,
+        friction: 7,
+      }),
     ]).start();
 
     setIsMenuOpen(!isMenuOpen);
@@ -68,14 +84,13 @@ const Home = () => {
     }).start();
   };
 
-  const rotation = rotateValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '45deg'],
-  });
-
+  // Calculate the slide distance for the indicator
+  // Each tab takes equal space with center button in between
+  // Total width calculation: (screen width - left padding - right padding - center button - 2 gaps) / 2
+  const tabWidth = (width - 16 - 16 - 60 - 12 - 12) / 2;
   const slideIndicator = slideAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, 180], // Adjust based on tab width
+    outputRange: [0, tabWidth + 60 + 12 + 12], // Move to second tab position (first tab width + button + both gaps)
   });
 
   const handlePhotoPress = () => {
@@ -88,39 +103,12 @@ const Home = () => {
     toggleMenu();
   };
 
-  const renderMediaItem = ({ item }: any) => (
-    <TouchableOpacity style={styles.mediaItem} activeOpacity={0.8}>
-      <Image source={{ uri: item.uri }} style={styles.mediaImage} />
-      {item.type === 'video' && (
-        <View style={styles.playIconContainer}>
-          <VideoCameraIcon size={32} color={colors.white} />
-        </View>
-      )}
-    </TouchableOpacity>
-  );
-
-  const renderEmptyState = () => (
-    <View style={styles.emptyContainer}>
-      {activeTab === 'photos' ? (
-        <PhotoIcon size={64} color={colors.gray300} />
-      ) : (
-        <VideoCameraIcon size={64} color={colors.gray300} />
-      )}
-      <Text style={styles.emptyTitle}>
-        No {activeTab === 'photos' ? 'Photos' : 'Videos'} Yet
-      </Text>
-      <Text style={styles.emptySubtitle}>
-        Tap the + button to upload your first{' '}
-        {activeTab === 'photos' ? 'photo' : 'video'}
-      </Text>
-    </View>
-  );
-
   return (
     <View style={styles.container}>
       {/* Tab Navigation */}
       <View style={styles.tabContainer}>
-        <View style={styles.tabButtonsContainer}>
+        <View style={styles.headerRow}>
+          {/* Photos Tab */}
           <TouchableOpacity
             style={[
               styles.tabButton,
@@ -130,7 +118,7 @@ const Home = () => {
             activeOpacity={0.7}
           >
             <PhotoIcon
-              size={20}
+              size={22}
               color={activeTab === 'photos' ? colors.primary : colors.gray400}
             />
             <Text
@@ -141,13 +129,33 @@ const Home = () => {
             >
               Photos
             </Text>
-            {activeTab === 'photos' && (
-              <View style={styles.tabBadge}>
-                <Text style={styles.tabBadgeText}>{photos.length}</Text>
-              </View>
-            )}
+            <View
+              style={[
+                styles.tabBadge,
+                activeTab === 'photos' && styles.tabBadgeActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.tabBadgeText,
+                  activeTab === 'photos' && styles.tabBadgeTextActive,
+                ]}
+              >
+                {photos.length}
+              </Text>
+            </View>
           </TouchableOpacity>
 
+          {/* Center Add Button */}
+          <TouchableOpacity
+            style={styles.centerAddButton}
+            onPress={toggleMenu}
+            activeOpacity={0.8}
+          >
+            <PlusIcon size={28} color={colors.white} />
+          </TouchableOpacity>
+
+          {/* Videos Tab */}
           <TouchableOpacity
             style={[
               styles.tabButton,
@@ -157,7 +165,7 @@ const Home = () => {
             activeOpacity={0.7}
           >
             <VideoCameraIcon
-              size={20}
+              size={22}
               color={activeTab === 'videos' ? colors.primary : colors.gray400}
             />
             <Text
@@ -168,11 +176,21 @@ const Home = () => {
             >
               Videos
             </Text>
-            {activeTab === 'videos' && (
-              <View style={styles.tabBadge}>
-                <Text style={styles.tabBadgeText}>{videos.length}</Text>
-              </View>
-            )}
+            <View
+              style={[
+                styles.tabBadge,
+                activeTab === 'videos' && styles.tabBadgeActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.tabBadgeText,
+                  activeTab === 'videos' && styles.tabBadgeTextActive,
+                ]}
+              >
+                {videos.length}
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -187,16 +205,84 @@ const Home = () => {
         />
       </View>
 
-      {/* Content */}
-      <FlatList
-        data={activeTab === 'photos' ? photos : videos}
-        renderItem={renderMediaItem}
-        keyExtractor={item => item.id}
-        numColumns={2}
-        contentContainerStyle={styles.listContainer}
-        ListEmptyComponent={renderEmptyState}
-        showsVerticalScrollIndicator={false}
-      />
+      {/* Media Gallery */}
+      {activeTab === 'photos' ? (
+        <MediaGallery
+          data={photos}
+          isLoading={isLoading}
+          isLoadingMore={isLoadingMore}
+          hasMore={hasMorePhotos}
+          onEndReached={loadMorePhotos}
+          onRefresh={refreshPhotos}
+          isRefreshing={isRefreshing}
+          emptyIcon={<PhotoIcon size={64} color={colors.gray300} />}
+          emptyTitle="No Photos Yet"
+          emptySubtitle="Tap the + button to upload your first photo"
+          selectedItems={selectedPhotos}
+          isSelectionMode={isSelectionMode}
+          onLongPress={id => handleLongPress(id, 'photo')}
+          onPress={id => handlePress(id, 'photo')}
+        />
+      ) : (
+        <MediaGallery
+          data={videos}
+          isLoading={isLoading}
+          isLoadingMore={isLoadingMore}
+          hasMore={hasMoreVideos}
+          onEndReached={loadMoreVideos}
+          onRefresh={refreshVideos}
+          isRefreshing={isRefreshing}
+          emptyIcon={<VideoCameraIcon size={64} color={colors.gray300} />}
+          emptyTitle="No Videos Yet"
+          emptySubtitle="Tap the + button to upload your first video"
+          selectedItems={selectedVideos}
+          isSelectionMode={isSelectionMode}
+          onLongPress={id => handleLongPress(id, 'video')}
+          onPress={id => handlePress(id, 'video')}
+        />
+      )}
+
+      {/* Selection Action Bar */}
+      {isSelectionMode && (
+        <View style={styles.actionBar}>
+          <TouchableOpacity
+            style={styles.actionBarButton}
+            onPress={cancelSelection}
+            activeOpacity={0.8}
+          >
+            <XMarkIcon size={24} color={colors.textPrimary} />
+            <Text style={styles.actionBarButtonText}>Cancel</Text>
+          </TouchableOpacity>
+
+          <Text style={styles.actionBarText}>
+            {activeTab === 'photos'
+              ? `${selectedPhotos.length} selected`
+              : `${selectedVideos.length} selected`}
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              styles.actionBarButton,
+              styles.deleteButton,
+              (activeTab === 'photos'
+                ? selectedPhotos.length === 0
+                : selectedVideos.length === 0) && styles.deleteButtonDisabled,
+            ]}
+            onPress={() =>
+              deleteSelectedItems(activeTab === 'photos' ? 'photo' : 'video')
+            }
+            activeOpacity={0.8}
+            disabled={
+              activeTab === 'photos'
+                ? selectedPhotos.length === 0
+                : selectedVideos.length === 0
+            }
+          >
+            <TrashIcon size={24} color={colors.white} />
+            <Text style={styles.deleteButtonText}>Delete</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Overlay when menu is open */}
       {isMenuOpen && (
@@ -208,75 +294,61 @@ const Home = () => {
       )}
 
       {/* Loading Indicator */}
-      {isUploading && (
+      {(isUploading || isDeleting) && (
         <View style={styles.loadingOverlay}>
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={colors.primary} />
-            <Text style={styles.loadingText}>Uploading...</Text>
+            <Text style={styles.loadingText}>
+              {isUploading ? 'Uploading...' : 'Deleting...'}
+            </Text>
           </View>
         </View>
       )}
 
-      {/* Floating Action Buttons */}
-      <View style={styles.fabContainer}>
-        {/* Photo Button */}
-        <Animated.View
-          style={[
-            styles.optionButton,
-            {
-              transform: [{ scale: scalePhoto }],
-              opacity: scalePhoto,
-            },
-          ]}
-        >
-          <TouchableOpacity
-            style={[styles.optionButtonInner, styles.photoButton]}
-            onPress={handlePhotoPress}
-            activeOpacity={0.8}
+      {/* Dropdown Menu Options */}
+      {isMenuOpen && (
+        <View style={styles.dropdownMenu}>
+          {/* Photo Option */}
+          <Animated.View
+            style={[
+              styles.dropdownOption,
+              {
+                transform: [{ scale: scalePhoto }],
+                opacity: scalePhoto,
+              },
+            ]}
           >
-            <PhotoIcon size={26} color={colors.white} />
-          </TouchableOpacity>
-          <Text style={styles.optionLabel}>Photo</Text>
-        </Animated.View>
+            <TouchableOpacity
+              style={[styles.dropdownButton, styles.photoButton]}
+              onPress={handlePhotoPress}
+              activeOpacity={0.8}
+            >
+              <PhotoIcon size={20} color={colors.white} />
+              <Text style={styles.dropdownButtonText}>Upload Photo</Text>
+            </TouchableOpacity>
+          </Animated.View>
 
-        {/* Video Button */}
-        <Animated.View
-          style={[
-            styles.optionButton,
-            {
-              transform: [{ scale: scaleVideo }],
-              opacity: scaleVideo,
-            },
-          ]}
-        >
-          <TouchableOpacity
-            style={[styles.optionButtonInner, styles.videoButton]}
-            onPress={handleVideoPress}
-            activeOpacity={0.8}
+          {/* Video Option */}
+          <Animated.View
+            style={[
+              styles.dropdownOption,
+              {
+                transform: [{ scale: scaleVideo }],
+                opacity: scaleVideo,
+              },
+            ]}
           >
-            <VideoCameraIcon size={26} color={colors.white} />
-          </TouchableOpacity>
-          <Text style={styles.optionLabel}>Video</Text>
-        </Animated.View>
-
-        {/* Main FAB Button */}
-        <Animated.View
-          style={[
-            styles.fab,
-            {
-              transform: [{ rotate: rotation }],
-            },
-          ]}
-        >
-          <TouchableOpacity
-            style={styles.fabButton}
-            onPress={toggleMenu}
-            activeOpacity={0.8}
-          >
-            <PlusIcon size={26} color={colors.white} />
-          </TouchableOpacity>
-        </Animated.View>
-      </View>
+            <TouchableOpacity
+              style={[styles.dropdownButton, styles.videoButton]}
+              onPress={handleVideoPress}
+              activeOpacity={0.8}
+            >
+              <VideoCameraIcon size={20} color={colors.white} />
+              <Text style={styles.dropdownButtonText}>Upload Video</Text>
+            </TouchableOpacity>
+          </Animated.View>
+        </View>
+      )}
     </View>
   );
 };
