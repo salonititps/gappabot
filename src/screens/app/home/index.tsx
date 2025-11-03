@@ -84,13 +84,10 @@ const Home = () => {
     }).start();
   };
 
-  // Calculate the slide distance for the indicator
-  // Each tab takes equal space with center button in between
-  // Total width calculation: (screen width - left padding - right padding - center button - 2 gaps) / 2
   const tabWidth = (width - 16 - 16 - 60 - 12 - 12) / 2;
   const slideIndicator = slideAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [0, tabWidth + 60 + 12 + 12], // Move to second tab position (first tab width + button + both gaps)
+    outputRange: [0, tabWidth + 60 + 12 + 12],
   });
 
   const handlePhotoPress = () => {
