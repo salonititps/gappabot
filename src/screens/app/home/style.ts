@@ -1,7 +1,6 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { colors } from '../../../utils/colors';
-
-const { width } = Dimensions.get('window');
+import { WIDTH } from '../../../utils/helper';
 
 export const styles = StyleSheet.create({
   container: {
@@ -11,8 +10,7 @@ export const styles = StyleSheet.create({
   tabContainer: {
     backgroundColor: colors.white,
     paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
+    paddingVertical: 10,
     borderBottomWidth: 1,
     borderBottomColor: colors.gray200,
   },
@@ -69,7 +67,7 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     left: 16,
-    width: (width - 16 - 16 - 60 - 12 - 12) / 2,
+    width: (WIDTH - 16 - 16 - 60 - 12 - 12) / 2,
     height: 4,
     backgroundColor: colors.primary,
     borderTopLeftRadius: 4,

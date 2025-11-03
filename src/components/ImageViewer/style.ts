@@ -1,6 +1,5 @@
-import { StyleSheet, Dimensions, Platform } from 'react-native';
-
-const { width, height } = Dimensions.get('window');
+import { StyleSheet, Platform } from 'react-native';
+import { WIDTH, HEIGHT } from '../../utils/helper';
 
 export const styles = StyleSheet.create({
   container: {
@@ -18,8 +17,8 @@ export const styles = StyleSheet.create({
     zIndex: 2,
   },
   image: {
-    width: width,
-    height: height,
+    width: WIDTH,
+    height: HEIGHT,
   },
   closeButton: {
     position: 'absolute',

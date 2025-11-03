@@ -5,7 +5,6 @@ import {
   TouchableOpacity,
   Animated,
   ActivityIndicator,
-  Dimensions,
 } from 'react-native';
 import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import {
@@ -19,8 +18,7 @@ import { styles } from './style';
 import { colors } from '../../../utils/colors';
 import { useHome } from './useHome';
 import { MediaGallery } from '../../../components/MediaGallery';
-
-const { width } = Dimensions.get('window');
+import { WIDTH } from '../../../utils/helper';
 
 const Home = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -94,7 +92,7 @@ const Home = () => {
   const handleGestureStateChange = (event: any) => {
     if (event.nativeEvent.state === State.END) {
       const { translationX, velocityX } = event.nativeEvent;
-      const swipeThreshold = width * 0.25; // 25% of screen width
+      const swipeThreshold = WIDTH * 0.25; // 25% of screen width
 
       // Determine if we should switch tabs based on swipe distance or velocity
       const shouldSwitch =
@@ -120,7 +118,7 @@ const Home = () => {
     }
   };
 
-  const tabWidth = (width - 16 - 16 - 60 - 12 - 12) / 2;
+  const tabWidth = (WIDTH - 16 - 16 - 60 - 12 - 12) / 2;
   const slideIndicator = slideAnimation.interpolate({
     inputRange: [0, 1],
     outputRange: [0, tabWidth + 60 + 12 + 12],
