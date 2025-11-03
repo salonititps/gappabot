@@ -16,7 +16,7 @@ import {
   useRegister,
 } from './useRegister';
 
-export const RegisterScreen: React.FC = () => {
+const RegisterScreen: React.FC = () => {
   const { handleRegister, handleLogin, loading, error } = useRegister();
 
   return (
@@ -153,3 +153,5 @@ export const RegisterScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
+
+export default RegisterScreen;

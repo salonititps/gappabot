@@ -13,7 +13,7 @@ import { Checkbox } from '../../../components/common/Checkbox';
 import { styles } from './style';
 import { loginValidationSchema, initialValues, useLogin } from './useLogin';
 
-export const LoginScreen: React.FC = () => {
+const LoginScreen: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const { handleLogin, handleForgotPassword, handleSignUp, loading, error } =
     useLogin();
@@ -118,3 +118,5 @@ export const LoginScreen: React.FC = () => {
     </SafeAreaView>
   );
 };
+
+export default LoginScreen;

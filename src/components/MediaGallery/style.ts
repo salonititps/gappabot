@@ -21,14 +21,6 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: colors.gray100,
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
   mediaImage: {
     width: '100%',
@@ -44,14 +36,6 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderRadius: 20,
     padding: 2,
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 3,
-    elevation: 5,
   },
   playIconContainer: {
     position: 'absolute',

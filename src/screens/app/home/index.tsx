@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Dimensions,
 } from 'react-native';
+import { PanGestureHandler, State } from 'react-native-gesture-handler';
 import {
   PhotoIcon,
   VideoCameraIcon,
@@ -27,6 +28,7 @@ const Home = () => {
   const scalePhoto = useRef(new Animated.Value(0)).current;
   const scaleVideo = useRef(new Animated.Value(0)).current;
   const slideAnimation = useRef(new Animated.Value(0)).current;
+  const gestureTranslateX = useRef(new Animated.Value(0)).current;
 
   const {
     isUploading,
@@ -82,6 +84,40 @@ const Home = () => {
       tension: 40,
       friction: 7,
     }).start();
+  };
+
+  const handleGestureEvent = Animated.event(
+    [{ nativeEvent: { translationX: gestureTranslateX } }],
+    { useNativeDriver: true },
+  );
+
+  const handleGestureStateChange = (event: any) => {
+    if (event.nativeEvent.state === State.END) {
+      const { translationX, velocityX } = event.nativeEvent;
+      const swipeThreshold = width * 0.25; // 25% of screen width
+
+      // Determine if we should switch tabs based on swipe distance or velocity
+      const shouldSwitch =
+        Math.abs(translationX) > swipeThreshold || Math.abs(velocityX) > 500;
+
+      if (shouldSwitch) {
+        // Swipe right (translationX > 0) = go to photos
+        // Swipe left (translationX < 0) = go to videos
+        if (translationX > 0 && activeTab === 'videos') {
+          switchTab('photos');
+        } else if (translationX < 0 && activeTab === 'photos') {
+          switchTab('videos');
+        }
+      }
+
+      // Reset the gesture translation
+      Animated.spring(gestureTranslateX, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 40,
+        friction: 7,
+      }).start();
+    }
   };
 
   const tabWidth = (width - 16 - 16 - 60 - 12 - 12) / 2;
@@ -203,41 +239,50 @@ const Home = () => {
       </View>
 
       {/* Media Gallery */}
-      {activeTab === 'photos' ? (
-        <MediaGallery
-          data={photos}
-          isLoading={isLoading}
-          isLoadingMore={isLoadingMore}
-          hasMore={hasMorePhotos}
-          onEndReached={loadMorePhotos}
-          onRefresh={refreshPhotos}
-          isRefreshing={isRefreshing}
-          emptyIcon={<PhotoIcon size={64} color={colors.gray300} />}
-          emptyTitle="No Photos Yet"
-          emptySubtitle="Tap the + button to upload your first photo"
-          selectedItems={selectedPhotos}
-          isSelectionMode={isSelectionMode}
-          onLongPress={id => handleLongPress(id, 'photo')}
-          onPress={id => handlePress(id, 'photo')}
-        />
-      ) : (
-        <MediaGallery
-          data={videos}
-          isLoading={isLoading}
-          isLoadingMore={isLoadingMore}
-          hasMore={hasMoreVideos}
-          onEndReached={loadMoreVideos}
-          onRefresh={refreshVideos}
-          isRefreshing={isRefreshing}
-          emptyIcon={<VideoCameraIcon size={64} color={colors.gray300} />}
-          emptyTitle="No Videos Yet"
-          emptySubtitle="Tap the + button to upload your first video"
-          selectedItems={selectedVideos}
-          isSelectionMode={isSelectionMode}
-          onLongPress={id => handleLongPress(id, 'video')}
-          onPress={id => handlePress(id, 'video')}
-        />
-      )}
+      <PanGestureHandler
+        onGestureEvent={handleGestureEvent}
+        onHandlerStateChange={handleGestureStateChange}
+        activeOffsetX={[-10, 10]}
+        failOffsetY={[-10, 10]}
+      >
+        <Animated.View style={styles.gestureContainer}>
+          {activeTab === 'photos' ? (
+            <MediaGallery
+              data={photos}
+              isLoading={isLoading}
+              isLoadingMore={isLoadingMore}
+              hasMore={hasMorePhotos}
+              onEndReached={loadMorePhotos}
+              onRefresh={refreshPhotos}
+              isRefreshing={isRefreshing}
+              emptyIcon={<PhotoIcon size={64} color={colors.gray300} />}
+              emptyTitle="No Photos Yet"
+              emptySubtitle="Tap the + button to upload your first photo"
+              selectedItems={selectedPhotos}
+              isSelectionMode={isSelectionMode}
+              onLongPress={id => handleLongPress(id, 'photo')}
+              onPress={id => handlePress(id, 'photo')}
+            />
+          ) : (
+            <MediaGallery
+              data={videos}
+              isLoading={isLoading}
+              isLoadingMore={isLoadingMore}
+              hasMore={hasMoreVideos}
+              onEndReached={loadMoreVideos}
+              onRefresh={refreshVideos}
+              isRefreshing={isRefreshing}
+              emptyIcon={<VideoCameraIcon size={64} color={colors.gray300} />}
+              emptyTitle="No Videos Yet"
+              emptySubtitle="Tap the + button to upload your first video"
+              selectedItems={selectedVideos}
+              isSelectionMode={isSelectionMode}
+              onLongPress={id => handleLongPress(id, 'video')}
+              onPress={id => handlePress(id, 'video')}
+            />
+          )}
+        </Animated.View>
+      </PanGestureHandler>
 
       {/* Selection Action Bar */}
       {isSelectionMode && (

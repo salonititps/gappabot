@@ -5,11 +5,12 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AuthNavigator from './authNavigator';
 import AppNavigator from './homeNavigator';
 import { useSelector } from 'react-redux';
+import { colors } from '../utils/colors';
 
 const Navigation = () => {
   const { token } = useSelector((state: any) => state.auth);
   const backgroundColor = useMemo(() => {
-    return '#FFFFFF';
+    return colors.white;
   }, []);
 
   const wrapperStyles = {

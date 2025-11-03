@@ -8,6 +8,7 @@ interface MediaItem {
   id: string;
   uri: string;
   type: 'photo' | 'video';
+  thumbnail?: string; // For video thumbnails
 }
 
 interface PaginationInfo {
@@ -100,6 +101,7 @@ export const useHome = () => {
         const fetchedVideos = response.data.map((item: any) => ({
           id: item._id || item.id,
           uri: item.url || item.uri,
+          thumbnail: item.thumbnail, // Include thumbnail URL
           type: 'video' as const,
         }));
 

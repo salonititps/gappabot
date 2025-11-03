@@ -62,18 +62,6 @@ export const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '600',
   },
-  dividerText: {
-    fontSize: 16,
-    color: colors.textSecondary,
-    textAlign: 'center',
-    marginVertical: 8,
-  },
-  socialContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 16,
-    marginBottom: 8,
-  },
   errorContainer: {
     backgroundColor: colors.error + '10',
     borderRadius: 8,

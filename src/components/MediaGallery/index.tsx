@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   View,
   FlatList,
@@ -9,6 +9,8 @@ import {
   RefreshControl,
 } from 'react-native';
 import { VideoCameraIcon, CheckCircleIcon } from 'react-native-heroicons/solid';
+import { ImageViewer } from '../ImageViewer';
+import { VideoViewer } from '../VideoViewer';
 import { styles } from './style';
 import { colors } from '../../utils/colors';
 
@@ -16,6 +18,7 @@ interface MediaItem {
   id: string;
   uri: string;
   type: 'photo' | 'video';
+  thumbnail?: string;
 }
 
 interface MediaGalleryProps {
@@ -52,9 +55,42 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
   onPress,
 }) => {
   const flatListRef = useRef<FlatList>(null);
+  const [viewerVisible, setViewerVisible] = useState(false);
+  const [selectedImageUri, setSelectedImageUri] = useState('');
+  const [videoViewerVisible, setVideoViewerVisible] = useState(false);
+  const [selectedVideoUri, setSelectedVideoUri] = useState('');
+
+  const handleImagePress = (item: MediaItem) => {
+    if (isSelectionMode) {
+      onPress(item.id);
+    } else {
+      // Open full screen viewer for images
+      if (item.type === 'photo') {
+        setSelectedImageUri(item.uri);
+        setViewerVisible(true);
+      } else if (item.type === 'video') {
+        // Open video viewer
+        setSelectedVideoUri(item.uri);
+        setVideoViewerVisible(true);
+      }
+    }
+  };
+
+  const closeViewer = () => {
+    setViewerVisible(false);
+    setSelectedImageUri('');
+  };
+
+  const closeVideoViewer = () => {
+    setVideoViewerVisible(false);
+    setSelectedVideoUri('');
+  };
 
   const renderMediaItem = ({ item }: { item: MediaItem }) => {
     const isSelected = selectedItems.includes(item.id);
+    // Use thumbnail for videos, otherwise use the uri
+    const imageSource =
+      item.type === 'video' && item.thumbnail ? item.thumbnail : item.uri;
 
     return (
       <View style={styles.mediaItemWrapper}>
@@ -62,9 +98,9 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
           style={styles.mediaItem}
           activeOpacity={0.8}
           onLongPress={() => onLongPress(item.id)}
-          onPress={() => (isSelectionMode ? onPress(item.id) : null)}
+          onPress={() => handleImagePress(item)}
         >
-          <Image source={{ uri: item.uri }} style={styles.mediaImage} />
+          <Image source={{ uri: imageSource }} style={styles.mediaImage} />
           {item.type === 'video' && (
             <View style={styles.playIconContainer}>
               <VideoCameraIcon size={32} color={colors.white} />
@@ -140,6 +176,19 @@ export const MediaGallery: React.FC<MediaGalleryProps> = ({
             tintColor={colors.primary}
           />
         }
+        extraData={selectedItems}
+      />
+
+      <ImageViewer
+        visible={viewerVisible}
+        imageUri={selectedImageUri}
+        onClose={closeViewer}
+      />
+
+      <VideoViewer
+        visible={videoViewerVisible}
+        videoUri={selectedVideoUri}
+        onClose={closeVideoViewer}
       />
     </View>
   );

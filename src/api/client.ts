@@ -1,6 +1,7 @@
 import axios, { AxiosResponse, InternalAxiosRequestConfig } from 'axios';
 import { fetch as nitroFetch } from 'react-native-nitro-fetch';
 import { store } from '../redux/store';
+import { logout } from '../redux/reducers/auth.slice';
 import { constants } from '../utils/constants';
 
 // ====== AXIOS CLIENT (For Text APIs) ======
@@ -35,6 +36,11 @@ api.interceptors.response.use(
     return response?.data;
   },
   (error: any) => {
+    // Handle 405 status code - logout user
+    if (error.response?.status === 405) {
+      console.log('405 Method Not Allowed - Logging out user');
+      store.dispatch(logout());
+    }
     return Promise.reject(error);
   },
 );
@@ -108,6 +114,12 @@ const nitroClient = async ({
     console.log('✅ Nitro-Fetch response status:', response.status);
 
     if (!response.ok) {
+      // Handle 405 status code - logout user
+      if (response.status === 405) {
+        console.log('🚪 405 Method Not Allowed - Logging out user');
+        store.dispatch(logout());
+      }
+
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
         errorData?.message || `Request failed with status ${response.status}`,

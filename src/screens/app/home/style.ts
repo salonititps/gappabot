@@ -2,25 +2,11 @@ import { StyleSheet, Dimensions } from 'react-native';
 import { colors } from '../../../utils/colors';
 
 const { width } = Dimensions.get('window');
-const itemWidth = (width - 48) / 2;
 
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: colors.background,
-  },
-  header: {
-    paddingTop: 60,
-    paddingBottom: 16,
-    paddingHorizontal: 20,
-    backgroundColor: colors.white,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.gray200,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: colors.textPrimary,
   },
   tabContainer: {
     backgroundColor: colors.white,
@@ -50,7 +36,6 @@ export const styles = StyleSheet.create({
   },
   tabButtonActive: {
     backgroundColor: colors.primaryLight,
-    shadowColor: colors.primary,
   },
   tabButtonText: {
     fontSize: 16,
@@ -84,7 +69,6 @@ export const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     left: 16,
-    // Calculate exact tab width: (total width - left padding - right padding - center button - 2 gaps) / 2
     width: (width - 16 - 16 - 60 - 12 - 12) / 2,
     height: 4,
     backgroundColor: colors.primary,
@@ -98,14 +82,6 @@ export const styles = StyleSheet.create({
     backgroundColor: colors.primary,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: colors.primary,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
   },
   dropdownMenu: {
     position: 'absolute',
@@ -130,59 +106,6 @@ export const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: colors.white,
-  },
-  listContainer: {
-    padding: 16,
-    paddingBottom: 100,
-  },
-  mediaItem: {
-    width: itemWidth,
-    height: itemWidth * 1.2,
-    margin: 4,
-    borderRadius: 12,
-    overflow: 'hidden',
-    backgroundColor: colors.gray100,
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  mediaImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  playIconContainer: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [{ translateX: -16 }, { translateY: -16 }],
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
-    borderRadius: 20,
-    padding: 8,
-  },
-  emptyContainer: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 80,
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: colors.textPrimary,
-    marginTop: 16,
-  },
-  emptySubtitle: {
-    fontSize: 14,
-    color: colors.gray400,
-    marginTop: 8,
-    textAlign: 'center',
-    paddingHorizontal: 40,
   },
   overlay: {
     position: 'absolute',
@@ -215,14 +138,6 @@ export const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
   },
   loadingText: {
     marginTop: 12,
@@ -243,14 +158,6 @@ export const styles = StyleSheet.create({
     paddingVertical: 16,
     borderTopWidth: 1,
     borderTopColor: colors.gray200,
-    shadowColor: colors.black,
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 8,
     zIndex: 4,
   },
   actionBarButton: {
@@ -282,5 +189,8 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: colors.white,
+  },
+  gestureContainer: {
+    flex: 1,
   },
 });
