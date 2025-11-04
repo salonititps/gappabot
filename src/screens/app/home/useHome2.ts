@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Alert, Platform } from 'react-native';
 import { launchImageLibrary, Asset } from 'react-native-image-picker';
+import { fetch } from 'react-native-nitro-fetch';
 import api from '../../../api';
 import { requestStoragePermission } from '../../../services/permissions';
+import { constants } from '../../../utils/constants';
+import { store } from '../../../redux/store';
 
 interface MediaItem {
   id: string;
@@ -22,7 +25,7 @@ interface PaginationInfo {
   prevPage: number | null;
 }
 
-export const useHome = () => {
+export const useHome2 = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -58,12 +61,47 @@ export const useHome = () => {
 
       console.log(`📥 Fetching photos - Page ${page}`);
 
-      const response = await api.MEDIA.getMedia('image', page, 50);
+      const state = store.getState();
+      const token = state.auth.token;
 
-      console.log('✅ Photos response:', response);
+      const url = `${constants.BASE_URL}/upload?type=image&page=${page}&limit=50`;
 
-      if (response?.data) {
-        const fetchedPhotos = response.data.map((item: any) => ({
+      const headers: Record<string, string> = {
+        'Content-Type': 'text/plain',
+      };
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      console.log('🌐 Fetching with URL:', url);
+      console.log('🔑 Headers:', headers);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+      });
+
+      console.log('📡 Response status:', response.status);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          // No photos found, just return
+          return;
+        }
+        const errorText = await response.text();
+        console.error('❌ Error response:', errorText);
+        throw new Error(
+          `Request failed with status ${response.status}: ${errorText}`,
+        );
+      }
+
+      const result = await response.json();
+
+      console.log('✅ Photos response:', result);
+
+      if (result?.data) {
+        const fetchedPhotos = result.data.map((item: any) => ({
           id: item._id || item.id,
           uri: item.url || item.uri,
           type: 'photo' as const,
@@ -75,11 +113,11 @@ export const useHome = () => {
           setPhotos(prev => [...prev, ...fetchedPhotos]);
         }
 
-        setPhotosPagination(response.pagination);
+        setPhotosPagination(result.pagination);
       }
     } catch (error: any) {
       console.error('❌ Error fetching photos:', error);
-      if (error.response?.status !== 404) {
+      if (error.status !== 404) {
         Alert.alert('Error', 'Failed to load photos');
       }
     } finally {
@@ -93,15 +131,50 @@ export const useHome = () => {
 
       console.log(`📥 Fetching videos - Page ${page}`);
 
-      const response = await api.MEDIA.getMedia('video', page, 50);
+      const state = store.getState();
+      const token = state.auth.token;
 
-      console.log('✅ Videos response:', response);
+      const url = `${constants.BASE_URL}/upload?type=video&page=${page}&limit=50`;
 
-      if (response?.data) {
-        const fetchedVideos = response.data.map((item: any) => ({
+      const headers: Record<string, string> = {
+        'Content-Type': 'text/plain',
+      };
+
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      console.log('🌐 Fetching with URL:', url);
+      console.log('🔑 Headers:', headers);
+
+      const response = await fetch(url, {
+        method: 'GET',
+        headers,
+      });
+
+      console.log('📡 Response status:', response.status);
+
+      if (!response.ok) {
+        if (response.status === 404) {
+          // No videos found, just return
+          return;
+        }
+        const errorText = await response.text();
+        console.error('❌ Error response:', errorText);
+        throw new Error(
+          `Request failed with status ${response.status}: ${errorText}`,
+        );
+      }
+
+      const result = await response.json();
+
+      console.log('✅ Videos response:', result);
+
+      if (result?.data) {
+        const fetchedVideos = result.data.map((item: any) => ({
           id: item._id || item.id,
           uri: item.url || item.uri,
-          thumbnail: item.thumbnail, // Include thumbnail URL
+          thumbnail: item.thumbnail,
           type: 'video' as const,
         }));
 
@@ -111,11 +184,11 @@ export const useHome = () => {
           setVideos(prev => [...prev, ...fetchedVideos]);
         }
 
-        setVideosPagination(response.pagination);
+        setVideosPagination(result.pagination);
       }
     } catch (error: any) {
       console.error('❌ Error fetching videos:', error);
-      if (error.response?.status !== 404) {
+      if (error.status !== 404) {
         Alert.alert('Error', 'Failed to load videos');
       }
     } finally {
@@ -399,10 +472,36 @@ export const useHome = () => {
               setIsDeleting(true);
               console.log(`🗑️ Deleting ${selectedIds.length} items...`);
 
+              const state = store.getState();
+              const token = state.auth.token;
+
               // Delete all selected items
-              const deletePromises = selectedIds.map(id =>
-                api.MEDIA.deleteMedia(id),
-              );
+              const deletePromises = selectedIds.map(async id => {
+                const url = `${constants.BASE_URL}/upload/${id}`;
+
+                const headers: Record<string, string> = {
+                  'Content-Type': 'text/plain',
+                };
+
+                if (token) {
+                  headers.Authorization = `Bearer ${token}`;
+                }
+
+                const response = await fetch(url, {
+                  method: 'DELETE',
+                  headers,
+                });
+
+                if (!response.ok) {
+                  const errorData = await response.json().catch(() => ({}));
+                  throw new Error(
+                    errorData?.message ||
+                      `Delete failed with status ${response.status}`,
+                  );
+                }
+
+                return response.json();
+              });
 
               await Promise.all(deletePromises);
 
@@ -428,7 +527,7 @@ export const useHome = () => {
               console.error('❌ Delete error:', error);
               Alert.alert(
                 'Delete Failed',
-                error.response?.data?.message || 'Failed to delete items',
+                error.message || 'Failed to delete items',
               );
             } finally {
               setIsDeleting(false);

@@ -16,7 +16,7 @@ import {
 } from 'react-native-heroicons/solid';
 import { styles } from './style';
 import { colors } from '../../../utils/colors';
-import { useHome } from './useHome';
+import { useHome2 } from './useHome2';
 import { MediaGallery } from '../../../components/MediaGallery';
 import { WIDTH } from '../../../utils/helper';
 
@@ -51,7 +51,7 @@ const Home = () => {
     handlePress,
     cancelSelection,
     deleteSelectedItems,
-  } = useHome();
+  } = useHome2();
 
   const toggleMenu = () => {
     const toValue = isMenuOpen ? 0 : 1;

@@ -4,7 +4,7 @@ import { colors } from '../../utils/colors';
 export const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.95)',
+    backgroundColor: 'rgba(0, 0, 0, 1)',
   },
   background: {
     ...StyleSheet.absoluteFillObject,
@@ -32,6 +32,23 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.3)',
   },
+  loadingContainer: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    zIndex: 3,
+  },
+  loadingText: {
+    color: colors.white,
+    fontSize: 14,
+    marginTop: 12,
+    fontWeight: '500',
+  },
   playButtonContainer: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -58,5 +75,19 @@ export const styles = StyleSheet.create({
     marginTop: 20,
     textAlign: 'center',
     paddingHorizontal: 40,
+  },
+  video: {
+    backgroundColor: '#000',
+  },
+  retryButton: {
+    marginTop: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: colors.primary,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: colors.white,
+    fontWeight: '600',
   },
 });

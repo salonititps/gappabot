@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Modal,
   View,
@@ -6,12 +6,13 @@ import {
   StatusBar,
   ActivityIndicator,
   Text,
-  Linking,
   Alert,
 } from 'react-native';
-import { XMarkIcon, PlayIcon } from 'react-native-heroicons/solid';
+import { XMarkIcon } from 'react-native-heroicons/solid';
+import Video from 'react-native-video';
 import { colors } from '../../utils/colors';
 import { styles } from './style';
+import { HEIGHT, WIDTH } from '../../utils/helper';
 
 interface VideoViewerProps {
   visible: boolean;
@@ -24,27 +25,53 @@ export const VideoViewer: React.FC<VideoViewerProps> = ({
   videoUri,
   onClose,
 }) => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [paused, setPaused] = useState(true);
+  const [hasError, setHasError] = useState(false);
+  const videoRef = useRef<any>(null);
 
-  const openVideo = async () => {
-    try {
+  // Reset state when modal opens or videoUri changes
+  useEffect(() => {
+    if (visible) {
+      console.log('📹 VideoViewer opened with URI:', videoUri);
       setLoading(true);
-      const supported = await Linking.canOpenURL(videoUri);
+      setPaused(true);
+      setHasError(false);
+    }
+  }, [visible, videoUri]);
 
-      if (supported) {
-        await Linking.openURL(videoUri);
-        // Close the modal after opening
-        setTimeout(() => {
-          onClose();
-        }, 500);
-      } else {
-        Alert.alert('Error', 'Cannot open this video URL');
-      }
-    } catch (error) {
-      console.error('Error opening video:', error);
-      Alert.alert('Error', 'Failed to open video');
-    } finally {
-      setLoading(false);
+  const handleLoad = (data: any) => {
+    console.log('✅ Video loaded successfully:', data);
+    setLoading(false);
+    setHasError(false);
+    // Auto-play after loading
+    setPaused(false);
+  };
+
+  const handleLoadStart = () => {
+    console.log('📥 Video loading started...');
+    setLoading(true);
+    setHasError(false);
+  };
+
+  const handleError = (err: any) => {
+    console.error('❌ Video playback error:', err);
+    setLoading(false);
+    setHasError(true);
+    Alert.alert('Error', 'Failed to load video. Please try again.');
+  };
+
+  const handleClose = () => {
+    console.log('🚪 Closing video viewer');
+    setPaused(true);
+    setLoading(true);
+    setHasError(false);
+    onClose();
+  };
+
+  const togglePlayPause = () => {
+    if (!loading && !hasError) {
+      setPaused(!paused);
     }
   };
 
@@ -53,50 +80,80 @@ export const VideoViewer: React.FC<VideoViewerProps> = ({
       visible={visible}
       transparent={true}
       animationType="fade"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
       statusBarTranslucent={true}
     >
       <StatusBar
         barStyle="light-content"
-        backgroundColor="rgba(0, 0, 0, 0.95)"
+        backgroundColor="rgba(0, 0, 0, 1)"
         translucent={true}
       />
       <View style={styles.container}>
-        {/* Background - Tap to close */}
-        <TouchableOpacity
-          style={styles.background}
-          activeOpacity={1}
-          onPress={onClose}
-        />
+        {/* Video Player */}
+        {visible && videoUri ? (
+          <TouchableOpacity
+            style={styles.videoContainer}
+            activeOpacity={1}
+            onPress={togglePlayPause}
+          >
+            <Video
+              ref={videoRef}
+              source={{ uri: videoUri }}
+              style={[
+                styles.video,
+                {
+                  width: WIDTH,
+                  height: HEIGHT,
+                },
+              ]}
+              controls={true}
+              resizeMode="contain"
+              paused={paused}
+              onLoad={handleLoad}
+              onLoadStart={handleLoadStart}
+              onError={handleError}
+              onEnd={() => {
+                console.log('🎬 Video ended');
+                setPaused(true);
+              }}
+              repeat={false}
+              playInBackground={false}
+              playWhenInactive={false}
+              ignoreSilentSwitch="ignore"
+              mixWithOthers="duck"
+            />
 
-        {/* Video Container */}
-        <View style={styles.videoContainer}>
-          <View style={styles.playButtonContainer}>
-            <TouchableOpacity
-              style={styles.playButton}
-              onPress={openVideo}
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              {loading ? (
+            {/* Loading Indicator */}
+            {loading && !hasError && (
+              <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={colors.white} />
-              ) : (
-                <>
-                  <PlayIcon size={48} color={colors.white} />
-                  <Text style={styles.playText}>Play Video</Text>
-                </>
-              )}
-            </TouchableOpacity>
-            <Text style={styles.hintText}>
-              Opens in your device's native video player
-            </Text>
-          </View>
-        </View>
+                <Text style={styles.loadingText}>Loading video...</Text>
+              </View>
+            )}
+
+            {/* Error State */}
+            {hasError && (
+              <View style={styles.loadingContainer}>
+                <Text style={styles.loadingText}>Failed to load video</Text>
+                <TouchableOpacity
+                  onPress={() => {
+                    setHasError(false);
+                    setLoading(true);
+                    setPaused(false);
+                  }}
+                  style={styles.retryButton}
+                >
+                  <Text style={styles.retryButtonText}>Retry</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </TouchableOpacity>
+        ) : null}
 
         {/* Close Button */}
         <TouchableOpacity
           style={styles.closeButton}
-          onPress={onClose}
+          onPress={handleClose}
           activeOpacity={0.8}
         >
           <View style={styles.closeButtonInner}>
