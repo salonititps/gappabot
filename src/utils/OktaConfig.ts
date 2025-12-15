@@ -9,4 +9,7 @@ export const oktaConfig = {
 
   scopes: ['openid', 'profile', 'offline_access'],
   requireHardwareBackedKeyStore: false,
+
+  // Android-specific settings for browser sign-in
+  // browserMatchAll: true,
 };
