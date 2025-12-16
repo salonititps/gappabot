@@ -1,27 +1,28 @@
 import { create } from 'zustand';
-import MMKVStorage from 'react-native-mmkv-storage';
-import { persist, PersistStorage } from 'zustand/middleware';
+import { persist } from 'zustand/middleware';
+import { mmkvZustandStorage } from './mmkvStorage';
 
-const MMKV = new MMKVStorage.Loader().initialize();
-
-export const mmkvZustandStorage: PersistStorage<any> = {
-  getItem: (name: string) => {
-    const value = MMKV.getString(name);
-    return value ? JSON.parse(value) : null;
-  },
-  setItem: (name: string, value: any) => {
-    MMKV.setString(name, JSON.stringify(value));
-  },
-  removeItem: (name: string) => {
-    MMKV.removeItem(name);
-  },
-};
+export interface UserInfo {
+  name?: string;
+  email?: string;
+  preferred_username?: string;
+  given_name?: string;
+  family_name?: string;
+  sub?: string;
+}
 
 interface AuthState {
   accessToken: string | null;
   idToken: string | null;
   isAuthenticated: boolean;
-  setTokens: (accessToken: string, idToken: string) => void;
+  loginMethod: 'browser' | 'custom' | null;
+  userInfo: UserInfo | null;
+  setTokens: (
+    accessToken: string,
+    idToken: string,
+    loginMethod?: 'browser' | 'custom',
+  ) => void;
+  setUserInfo: (userInfo: UserInfo) => void;
   clearTokens: () => void;
 }
 
@@ -31,10 +32,19 @@ export const useAuthStore = create<AuthState>()(
       accessToken: null,
       idToken: null,
       isAuthenticated: false,
-      setTokens: (accessToken, idToken) =>
-        set({ accessToken, idToken, isAuthenticated: true }),
+      loginMethod: null,
+      userInfo: null,
+      setTokens: (accessToken, idToken, loginMethod = 'browser') =>
+        set({ accessToken, idToken, isAuthenticated: true, loginMethod }),
+      setUserInfo: userInfo => set({ userInfo }),
       clearTokens: () =>
-        set({ accessToken: null, idToken: null, isAuthenticated: false }),
+        set({
+          accessToken: null,
+          idToken: null,
+          isAuthenticated: false,
+          loginMethod: null,
+          userInfo: null,
+        }),
     }),
     {
       name: 'auth-storage',
