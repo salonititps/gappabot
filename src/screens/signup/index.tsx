@@ -98,7 +98,7 @@ const SignupScreen = () => {
             )}
           />
 
-          <Controller
+          {/* <Controller
             control={control}
             name="password"
             render={({ field: { onChange, onBlur, value } }) => (
@@ -135,7 +135,7 @@ const SignupScreen = () => {
                 required
               />
             )}
-          />
+          /> */}
 
           <TouchableOpacity
             style={styles.button}

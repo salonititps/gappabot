@@ -49,9 +49,9 @@ const useSignup = () => {
   const onSubmit = async (data: SignupFormData) => {
     setIsLoading(true);
     try {
-      // Step 1: Create user via Okta API
+      // Step 1: Create user via Okta API (activate=false to stage user)
       const response = await axios.post(
-        `${API_BASE_URL}/api/v1/users?activate=true`,
+        `${API_BASE_URL}/api/v1/users?activate=false`,
         {
           profile: {
             firstName: data.firstName,
@@ -59,11 +59,7 @@ const useSignup = () => {
             email: data.email,
             login: data.email,
           },
-          credentials: {
-            password: {
-              value: data.password,
-            },
-          },
+          // No credentials sent - forcing user to set password via activation email
         },
         {
           headers: {
@@ -76,7 +72,7 @@ const useSignup = () => {
 
       const result = response.data;
 
-      // Step 2: Assign user to the application so they can login
+      // Step 2: Assign user to the application
       const userId = result.id;
       const appId = oktaConfig.clientId;
 
@@ -101,12 +97,29 @@ const useSignup = () => {
         );
       }
 
+      // Step 3: Trigger activation email
+      try {
+        await axios.post(
+          `${API_BASE_URL}/api/v1/users/${userId}/lifecycle/activate?sendEmail=true`,
+          {},
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+              Authorization: API_TOKEN,
+            },
+          },
+        );
+      } catch (activationError) {
+        console.warn('Failed to trigger activation email:', activationError);
+      }
+
       Alert.alert(
         'Registration Successful',
-        'Your account has been created. Please sign in.',
+        'A verification email has been sent to your email address. Please click the link to set your password and activate your account.',
         [
           {
-            text: 'Sign In',
+            text: 'OK',
             onPress: () => navigation.navigate('Login'),
           },
         ],
