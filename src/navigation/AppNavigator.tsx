@@ -5,12 +5,20 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import LoginScreen from '../screens/login';
 import SignupScreen from '../screens/signup';
 import HomeScreen from '../screens/home';
+import DynamicScreen from '../screens/dynamic';
+
 import { useAuthStore } from '../store/useAuthStore';
 
 export type RootStackParamList = {
   Login: undefined;
   Signup: undefined;
   Home: undefined;
+  Dynamic: {
+    screenId: string;
+    type?: string;
+    title?: string;
+    data?: any;
+  };
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -22,7 +30,10 @@ export const AppNavigator = () => {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         {isAuthenticated ? (
-          <Stack.Screen name="Home" component={HomeScreen} />
+          <>
+            <Stack.Screen name="Home" component={HomeScreen} />
+            <Stack.Screen name="Dynamic" component={DynamicScreen} />
+          </>
         ) : (
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
