@@ -14,6 +14,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import { useAuthStore } from '../../store/useAuthStore';
 import { loginSchema, LoginFormData } from '../../utils/validation';
+import { GOOGLE_IDP } from '../../utils/constants';
 
 type RootStackParamList = {
   Login: undefined;
@@ -70,6 +71,8 @@ const useLogin = () => {
     setIsBrowserLoading(true);
     try {
       await signInWithBrowser();
+      // Example of using IDP:
+      // await signInWithBrowser({ idp: '0oa1abcdXYZ' });
       const accessToken = await getAccessToken();
       const idToken = await getIdToken();
       if (accessToken && idToken) {
@@ -77,6 +80,25 @@ const useLogin = () => {
       }
     } catch (error: any) {
       console.error('Browser Login Error:', error);
+      if (!error?.message?.includes('cancelled')) {
+        Alert.alert('Login Failed', error?.message || 'An error occurred');
+      }
+    } finally {
+      setIsBrowserLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setIsBrowserLoading(true);
+    try {
+      await signInWithBrowser({ idp: GOOGLE_IDP });
+      const accessToken = await getAccessToken();
+      const idToken = await getIdToken();
+      if (accessToken && idToken) {
+        setTokens(accessToken.access_token, idToken.id_token, 'browser');
+      }
+    } catch (error: any) {
+      console.error('Google Login Error:', error);
       if (!error?.message?.includes('cancelled')) {
         Alert.alert('Login Failed', error?.message || 'An error occurred');
       }
@@ -93,6 +115,7 @@ const useLogin = () => {
     isBrowserLoading,
     onSubmit,
     handleBrowserLogin,
+    handleGoogleLogin,
     navigation,
   };
 };

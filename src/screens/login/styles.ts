@@ -59,6 +59,13 @@ const styles = StyleSheet.create({
   browserButtonText: {
     color: '#007AFF',
   },
+  googleButton: {
+    backgroundColor: '#DB4437',
+    marginTop: 16,
+  },
+  googleButtonText: {
+    color: '#fff',
+  },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',

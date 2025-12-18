@@ -23,6 +23,7 @@ const LoginScreen = () => {
     isBrowserLoading,
     onSubmit,
     handleBrowserLogin,
+    handleGoogleLogin,
     navigation,
   } = useLogin();
 
@@ -103,6 +104,15 @@ const LoginScreen = () => {
                 Sign In with Browser
               </Text>
             )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.button, styles.googleButton]}
+            onPress={handleGoogleLogin}
+            disabled={isLoading || isBrowserLoading}>
+            <Text style={[styles.buttonText, styles.googleButtonText]}>
+              Sign in with Google
+            </Text>
           </TouchableOpacity>
 
           <View style={styles.footer}>
