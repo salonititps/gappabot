@@ -4,21 +4,25 @@ import { createConfig } from '@okta/okta-react-native';
 
 import { oktaConfig } from './src/utils/OktaConfig';
 import { AppNavigator } from './src/navigation/AppNavigator';
+import { useScreens } from './src/store/app';
 
 const App = () => {
   const [isReady, setIsReady] = React.useState(false);
 
   useEffect(() => {
-    const initOkta = async () => {
+    const init = async () => {
       try {
-        await createConfig(oktaConfig);
+        await Promise.all([
+          createConfig(oktaConfig),
+          useScreens.getState().getScreens(),
+        ]);
       } catch (error) {
-        console.error('Okta Config Error:', error);
+        console.error('Initialization Error:', error);
       } finally {
         setIsReady(true);
       }
     };
-    initOkta();
+    init();
   }, []);
 
   if (!isReady) {

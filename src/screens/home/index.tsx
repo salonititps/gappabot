@@ -4,40 +4,16 @@ import {
   Text,
   Button,
   ActivityIndicator,
-  StyleSheet,
+  TouchableOpacity,
 } from 'react-native';
-
-import useHome from './useHome';
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
-    paddingTop: 10,
-  },
-  header: {
-    paddingHorizontal: 16,
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 10,
-  },
-  infoContainer: {
-    marginBottom: 20,
-  },
-});
-
-// HomeScreen menu to access dynamic pages
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+
+import useHome from './useHome';
+import styles from './styles';
+
+// HomeScreen menu to access dynamic pages
 import { RootStackParamList } from '../../navigation/AppNavigator';
-import { TouchableOpacity } from 'react-native';
 
 const HomeScreen = () => {
   const { userInfo, loading, handleLogout } = useHome();
@@ -72,24 +48,16 @@ const HomeScreen = () => {
         <Button title="Logout" onPress={handleLogout} color="red" />
       </View>
 
-      <View style={{ padding: 16 }}>
+      <View style={styles.menuContainer}>
         <Text style={styles.subtitle}>Main Menu</Text>
         {menuItems.map(item => (
           <TouchableOpacity
             key={item.id}
-            style={{
-              backgroundColor: item.color,
-              padding: 20,
-              borderRadius: 12,
-              marginBottom: 16,
-              alignItems: 'center',
-            }}
+            style={[styles.menuItem, { backgroundColor: item.color }]}
             onPress={() =>
               navigation.navigate('Dynamic', { screenId: item.id })
             }>
-            <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>
-              {item.title}
-            </Text>
+            <Text style={styles.menuItemText}>{item.title}</Text>
           </TouchableOpacity>
         ))}
       </View>
