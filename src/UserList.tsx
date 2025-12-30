@@ -329,9 +329,6 @@ export default function UserList() {
           );
         }}
         removeClippedSubviews={false}
-        maintainVisibleContentPosition={{
-          minIndexForVisible: 0,
-        }}
       />
 
       <TouchableOpacity style={styles.fab} onPress={openAddModal}>
